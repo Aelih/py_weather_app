@@ -25,7 +25,7 @@ async def index(request: Request, db: Session = Depends(get_db)):
     )
 
 
-@app.post("/")
+@app.post("/weather/search", response_class=HTMLResponse))
 async def get_weather(city: str = Form(...), db: Session = Depends(get_db)):
     # 1. Мы БОЛЬШЕ НЕ ИЩЕМ город в базе перед запросом.
     # 2. Всегда идем в Open-Meteo за свежими данными:

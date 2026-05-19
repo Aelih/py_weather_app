@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: weather-app-python:latest
+    container_name: weather_web_python
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - /etc/localtime:/etc/localtime:ro  # Синхронизирует время с вашей Ubuntu
+      - /etc/timezone:/etc/timezone:ro
+    environment:
+      - DATABASE_URL=sqlite:////app/data/weather.db
+      - TZ=Asia/Novosibirsk

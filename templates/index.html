@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погода</title>
+    <style>
+        /* Сюда автоматически применятся ваши стили Glassmorphism из Rails проекта, 
+           так как мы сохранили оригинальные имена классов */
+        body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); min-height: 100vh; color: white; font-family: sans-serif; padding: 30px; }
+        .error { color: #ff4a4a; font-weight: bold; }
+        .weather-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 20px; margin: 20px 0; max-width: 400px; }
+        .weather-city { font-size: 20px; font-weight: bold; }
+        .weather-temp { font-size: 36px; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; }
+        input[type="text"] { padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-right: 10px; }
+        button { padding: 8px 16px; border-radius: 4px; background: #0072ff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<h1>
+    <a href="{{ url_for('index') }}" style="text-decoration: none; color: inherit;">ПОГОДА</a>
+</h1>
+
+<form action="/weather/search" method="post">
+    <div>
+        <label for="city">Город</label><br>
+        <input type="text" id="city" name="city" required autocomplete="off">
+    </div>
+
+    <div style="margin-top: 10px;">
+        <button type="submit">Показать погоду</button>
+    </div>
+</form>
+
+{% if weather %}
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% else %}
+        <div class="weather-card">
+            <div class="weather-city">
+                {{ weather.city }}, {{ weather.country }}
+            </div>
+
+            <div class="weather-temp">
+                {{ weather.temperature }}°C
+            </div>
+
+            <div class="weather-condition">
+                {{ weather.condition }}
+            </div>
+
+            <div class="weather-info">
+                Ветер: {{ weather.wind_speed }} км/ч
+            </div>
+
+            <div class="weather-info">
+                Обновлено: {{ weather.fetched_at }}
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+
+{% if history %}
+    <h2>История запросов</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Город</th>
+                <th>Страна</th>
+                <th>Температура</th>
+                <th>Состояние</th>
+                <th>Ветер</th>
+                <th>Время</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in history %}
+                <tr>
+                    <td>{{ item.city }}</td>
+                    <td>{{ item.country }}</td>
+                    <td>{{ item.temperature }} °C</td>
+                    <td>{{ item.condition }}</td>
+                    <td>{{ item.wind_speed }} км/ч</td>
+                    <td>{{ item.fetched_at.strftime("%d.%m.%Y %H:%M") }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+</body>
+</html>

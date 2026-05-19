@@ -25,34 +25,30 @@ async def index(request: Request, db: Session = Depends(get_db)):
     )
 
 
-@app.post("/weather/search", response_class=HTMLResponse))
-async def get_weather(city: str = Form(...), db: Session = Depends(get_db)):
-    # 1. Мы БОЛЬШЕ НЕ ИЩЕМ город в базе перед запросом.
-    # 2. Всегда идем в Open-Meteo за свежими данными:
-    weather_data = await weather_client.get_weather(city)
+@app.post("/weather/search", response_class=HTMLResponse)
+async def search(request: Request, city: str = Form(...), db: Session = Depends(get_db)):
+    client = WeatherClient(db)
+    error = None
+    weather = None
     
-    if not weather_data:
-        # Тут ваша обработка ошибки, если город не найден
-        return templates.TemplateResponse("index.html", {"request": request, "error": "Город не найден"})
+    city_stripped = city.strip()
     
-    # 3. ВСЕГДА создаем новую запись для истории (каждый клик = новая строка)
-    new_log = WeatherRequest(
-        city=weather_data["city"],
-        country=weather_data["country"],
-        temperature=weather_data["temperature"],
-        condition=weather_data["condition"],
-        wind_speed=weather_data["wind_speed"]
-        # fetched_at подставится автоматически благодаря вашей lambda в models.py!
-    )
-    
-    db.add(new_log)
-    db.commit()
-    db.refresh(new_log)
-    
-    # 4. Для отображения истории на странице берем, например, 10 последних записей
-    history = db.query(WeatherRequest).order_by(WeatherRequest.fetched_at.desc()).limit(10).all()
+    if not city_stripped:
+        error = "Введите название города"
+    else:
+        try:
+            # Запрашиваем погоду у клиента (он теперь ВСЕГДА пишет логи при каждом запросе)
+            weather = await client.fetch(city_stripped)
+        except ValueError:
+            error = f"Город '{city_stripped}' не найден"
+        except Exception:
+            error = "Ошибка внешнего API погоды"
+
+    # Загружаем обновленную историю (она сразу покажет дубликаты, если кликали один город)
+    history = db.query(models.WeatherRequest).order_by(models.WeatherRequest.id.desc()).limit(10).all()
     
     return templates.TemplateResponse(
-        "index.html", 
-        {"request": request, "current_weather": new_log, "history": history}
+        request=request,
+        name="index.html",
+        context={"history": history, "weather": weather, "error": error}
     )

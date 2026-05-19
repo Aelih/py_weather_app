@@ -17,17 +17,8 @@ class WeatherClient:
         self.tz = zoneinfo.ZoneInfo("Asia/Almaty")
 
     async def fetch(self, city: str) -> dict:
-        time_threshold = datetime.now(self.tz) - timedelta(minutes=30)
-        
-        # Поиск в кэше (Реализация симуляции .downcase из Rails через LIKE)
-        cached_request = self.db.query(WeatherRequest).filter(
-            WeatherRequest.city.like(city),
-            WeatherRequest.fetched_at > time_threshold.replace(tzinfo=None)
-        ).order_by(WeatherRequest.id.desc()).first()
-
-        if cached_request:
-            return self._serialize(cached_request)
-
+        # Мы полностью убрали поиск по time_threshold и cached_request
+        # Каждый вызов функции теперь гарантированно идет в API и делает db.add()
         return await self._fetch_from_api(city)
 
     async def _fetch_from_api(self, city: str) -> dict:
